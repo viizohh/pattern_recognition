@@ -9,10 +9,11 @@ This module coordinates all the network monitoring components:
 import click
 import time
 from net_watch.capture import PacketCapture
-from net_watch.alerts import AlertManager
+from net_watch.alerts import AlertManager, AlertLevel, Alert
 from net_watch.parsers.dns import DNSParser
 from net_watch.parsers.http import HTTPParser
 from net_watch.parsers.tcp import TCPParser
+from net_watch.parsers.payload import PayloadParser
 from net_watch.tracking.device_tracker import DeviceTracker
 from net_watch.tracking.domain_tracker import DomainTracker
 from net_watch.tracking.connection_tracker import ConnectionTracker
@@ -42,6 +43,7 @@ class NetworkMonitor:
         self.dns_parser = DNSParser()      # DNS queries and responses
         self.http_parser = HTTPParser()    # HTTP requests and HTTPS connections
         self.tcp_parser = TCPParser()      # TCP connection data
+        self.payload_parser = PayloadParser()  # Extract sensitive data from payloads
 
         # Trackers - maintain state about network activity
         self.device_tracker = DeviceTracker()            # Track devices on network
@@ -123,6 +125,9 @@ class NetworkMonitor:
         http_data = self.http_parser.parse_packet(packet)
         tcp_data = self.tcp_parser.parse_packet(packet)
 
+        # Parse payload for sensitive data
+        payload_findings = self.payload_parser.parse_packet(packet)
+
         # Update trackers with parsed data
         if dns_data:
             self._handle_dns_data(dns_data)
@@ -132,6 +137,10 @@ class NetworkMonitor:
 
         if tcp_data:
             self._handle_tcp_data(tcp_data)
+
+        # Alert on sensitive data findings
+        if payload_findings:
+            self._handle_sensitive_data(payload_findings)
 
         # Run detectors periodically (not on every packet to save CPU)
         current_time = time.time()
@@ -249,6 +258,38 @@ class NetworkMonitor:
         self.device_tracker.track_connection(src_ip, dst_ip, dst_port, size)
         self.connection_tracker.track_connection(src_ip, dst_ip, dst_port, success=True)
 
+    def _handle_sensitive_data(self, findings: list):
+        """Handle sensitive data found in packet payloads."""
+        for finding in findings:
+            # Create critical alert for sensitive data exposure
+            data_type_names = {
+                'password': 'Password',
+                'email': 'Email Address',
+                'credit_card': 'Credit Card Number',
+                'ssn': 'Social Security Number',
+                'api_key': 'API Key',
+                'bearer_token': 'Bearer Token',
+                'jwt': 'JWT Token',
+                'username': 'Username'
+            }
+
+            data_type_name = data_type_names.get(finding.data_type, finding.data_type)
+
+            # Use CRITICAL for passwords, credit cards, SSNs, API keys
+            # Use ALERT for emails, usernames, tokens
+            if finding.data_type in ['password', 'credit_card', 'ssn', 'api_key']:
+                level = AlertLevel.CRITICAL
+            else:
+                level = AlertLevel.ALERT
+
+            self.alert_manager.add_alert(Alert(
+                level=level,
+                message=f"Sensitive data detected: {data_type_name} sent from {finding.source_ip} to {finding.dest_ip}",
+                explanation=f"{data_type_name} transmitted in cleartext over {finding.protocol}. "
+                           f"This is a serious security risk as the data can be intercepted.",
+                technical_details=f"Value: {finding.value}\nContext: {finding.context}"
+            ))
+
     def run_detectors(self):
         """Run all behavioral detectors
 
@@ -301,6 +342,19 @@ class NetworkMonitor:
                             print(f"    Loaded {summary['third_party_count']} third-party domains")
 
         print("=" * 60)
+
+        # Show sensitive data findings if any
+        sensitive_summary = self.payload_parser.get_summary()
+        if sensitive_summary:
+            print("\n" + "=" * 60)
+            print("SENSITIVE DATA DETECTED:")
+            print("=" * 60)
+            for data_type, count in sensitive_summary.items():
+                data_type_display = data_type.replace('_', ' ').title()
+                print(f"  {data_type_display}: {count} instance(s)")
+            print("\nWARNING: Sensitive data was transmitted in cleartext!")
+            print("Check alerts above for details.")
+            print("=" * 60)
 
     def run_ai_analysis(self):
         """Run AI analysis on captured data and save results"""
