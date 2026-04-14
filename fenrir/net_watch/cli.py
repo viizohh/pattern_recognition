@@ -385,7 +385,7 @@ class NetworkMonitor:
 
 def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_only=False, enable_ai=False):
     """Wrapper function to run live capture (called from shell)"""
-    click.echo(f"vcu v0.1.0 - Live Network Monitor")
+    click.echo(f"Fenrir v1.0 - Live Network Monitor")
     click.echo("=" * 60)
     click.echo()
 
@@ -418,7 +418,7 @@ def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_o
 
 def run_pcap_analysis(pcap_file, device=None, show_all=False, verbose=False, alerts_only=False, enable_ai=False):
     """Wrapper function to run pcap analysis (called from shell)"""
-    click.echo(f"vcu v0.1.0 - PCAP Analyzer")
+    click.echo(f"Fenrir v1.0 - PCAP Analyzer")
     click.echo("=" * 60)
     click.echo()
 

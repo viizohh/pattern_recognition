@@ -1,6 +1,6 @@
-"""Interactive shell for vcu
+"""Interactive shell for Fenrir
 
-This module provides the interactive command-line interface for vcu.
+This module provides the interactive command-line interface for Fenrir.
 Users must enter this shell before they can use sniff commands (security feature).
 """
 
@@ -12,20 +12,52 @@ from colorama import Fore, Style, init
 # Initialize colorama for colored terminal output
 init(autoreset=True)
 
-class VCUShell(cmd.Cmd):
-    """Interactive shell for vcu network monitoring tool
+# ASCII art for Fenrir
+FENRIR_ASCII = f"""{Fore.CYAN}
+     ___           ___           ___           ___                       ___
+    /\__\\         /\__\\         /\  \\         /\  \\                     /\  \\
+   /:/ _/_       /:/ _/_        \:\  \\       /::\  \\       ___         /::\  \\
+  /:/ /\__\\     /:/ /\__\\        \:\  \\     /:/\:\__\\     /\__\\       /:/\:\__\\
+ /:/ /:/  /    /:/ /:/ _/_   _____\:\  \\   /:/ /:/  /    /:/__/      /:/ /:/  /
+/:/_/:/  /    /:/_/:/ /\__\\ /::::::::\__\\ /:/_/:/__/___ /::\  \\     /:/_/:/__/___
+\:\/:/  /     \:\/:/ /:/  / \:\~~\~~\/__/ \:\/:::::/  / \/\:\  \\__  \:\/:::::/  /
+ \::/__/       \::/_/:/  /   \:\  \\        \::/~~/~~~~   ~~\:\/\__\\  \::/~~/~~~~
+  \:\  \\        \:\/:/  /     \:\  \\        \:\~~\\          \::/  /   \:\~~\\
+   \:\__\\        \::/  /       \:\__\\        \:\__\\         /:/  /     \:\__\\
+    \/__/         \/__/         \/__/         \/__/         \/__/       \/__/
+{Style.RESET_ALL}"""
 
-    This shell provides a security layer - users must type 'vcu' to enter
+GOODBYE_ASCII = f"""{Fore.YELLOW}
+    ,---,.                 ,---,.
+  ,'  .'  \\       ,---,  ,'  .' |
+,---.' .' |      /_ ./|,---.'   |
+|   |  |: |,---, |  ' :|   |   .'
+:   :  :  /___/ \\.  : |:   :  |-,
+:   |    ; .  \\  \\ ,' ':   |  ;/|
+|   :     \\ \\  ;  `  ,'|   :   .'
+|   |   . |  \\  \\    ' |   |  |-,
+'   :  '; |   '  \\   | '   :  ;/|
+|   |  | ;     \\  ;  ; |   |    \\
+|   :   /       :  \\  \\|   :   .'
+|   | ,'         \\  ' ;|   | ,'
+`----'            `--` `----'
+{Style.RESET_ALL}"""
+
+class FenrirShell(cmd.Cmd):
+    """Interactive shell for Fenrir network monitoring tool
+
+    This shell provides a security layer - users must type 'fenrir' to enter
     the shell before they can run sniff commands. This prevents unauthorized
     network monitoring on shared computers.
     """
 
     # Message shown when shell starts
-    intro = f"{Fore.GREEN}vcu v0.1.0 - Network Monitoring Tool{Style.RESET_ALL}\n" \
-            f"Type 'help' or '?' for commands. Type 'quit' or 'exit' to leave.\n"
+    intro = FENRIR_ASCII + \
+            f"\n{Fore.GREEN}Welcome to Fenrir v1.0 - Network Security Scanner{Style.RESET_ALL}\n" \
+            f"Type 'help' to see available commands\n"
 
     # Command prompt shown to user
-    prompt = f"{Fore.YELLOW}vcu> {Style.RESET_ALL}"
+    prompt = f"{Fore.YELLOW}fenrir> {Style.RESET_ALL}"
 
     def do_sniff(self, arg):
         """
@@ -155,19 +187,29 @@ class VCUShell(cmd.Cmd):
             self.do_sniff('')
         else:
             super().do_help(arg)
-            print("\nAvailable commands:")
-            print("  sniff     Sniff network traffic (live or pcap)")
-            print("  help      Show this help message")
-            print("  quit      Exit vcu")
-            print("  exit      Exit vcu")
+            print(f"\n{Fore.CYAN}╔══════════════════════════════════════════════════════════╗")
+            print("║                  FENRIR COMMAND REFERENCE                ║")
+            print("╚══════════════════════════════════════════════════════════╝{Style.RESET_ALL}\n")
+            print(f"{Fore.GREEN}Available Commands:{Style.RESET_ALL}")
+            print(f"  {Fore.YELLOW}sniff{Style.RESET_ALL}     Monitor network traffic (live or pcap)")
+            print(f"  {Fore.YELLOW}help{Style.RESET_ALL}      Show this help message")
+            print(f"  {Fore.YELLOW}quit{Style.RESET_ALL}      Exit Fenrir")
+            print(f"  {Fore.YELLOW}exit{Style.RESET_ALL}      Exit Fenrir")
+            print(f"\n{Fore.GREEN}Quick Examples:{Style.RESET_ALL}")
+            print(f"  {Fore.CYAN}fenrir>{Style.RESET_ALL} sniff live --iface en0")
+            print(f"  {Fore.CYAN}fenrir>{Style.RESET_ALL} sniff live --iface en0 --ai")
+            print(f"  {Fore.CYAN}fenrir>{Style.RESET_ALL} sniff pcap capture.pcap --ai")
+            print(f"\n{Fore.GREEN}For detailed help on a command:{Style.RESET_ALL}")
+            print(f"  {Fore.CYAN}fenrir>{Style.RESET_ALL} help sniff\n")
 
     def do_quit(self, arg):
-        """Exit vcu"""
-        print(f"\n{Fore.CYAN}Goodbye! 🐏{Style.RESET_ALL}")
+        """Exit Fenrir"""
+        print(GOODBYE_ASCII)
+        print(f"{Fore.CYAN}Until we hunt again...{Style.RESET_ALL}\n")
         return True
 
     def do_exit(self, arg):
-        """Exit vcu"""
+        """Exit Fenrir"""
         return self.do_quit(arg)
 
     def do_EOF(self, arg):
@@ -186,5 +228,5 @@ class VCUShell(cmd.Cmd):
 
 
 def start_shell():
-    """Start the interactive vcu shell"""
-    VCUShell().cmdloop()
+    """Start the interactive Fenrir shell"""
+    FenrirShell().cmdloop()
