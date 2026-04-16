@@ -9,7 +9,6 @@ import shlex
 import sys
 from colorama import Fore, Style, init
 
-# Initialize colorama for colored terminal output
 init(autoreset=True)
 
 # ASCII art for Fenrir
@@ -80,7 +79,6 @@ class FenrirShell(cmd.Cmd):
           --verbose         Show detailed information
           --ai              Enable AI analysis (requires ANTHROPIC_API_KEY)
         """
-        # Check if user provided a subcommand
         if not arg:
             print(f"{Fore.RED}Error: sniff requires a subcommand (live or pcap){Style.RESET_ALL}")
             print("Usage: sniff live --iface INTERFACE [OPTIONS]")
@@ -112,7 +110,6 @@ class FenrirShell(cmd.Cmd):
                     print("Usage: sniff live --iface INTERFACE [OPTIONS]")
                     return
 
-                # Start live capture with parsed options
                 run_live_capture(
                     iface=options.get('iface'),
                     device=options.get('device'),
@@ -167,7 +164,6 @@ class FenrirShell(cmd.Cmd):
                 # Remove the '--' prefix to get the key name
                 key = arg[2:]
 
-                # Check if this option has a value or is just a flag
                 if i + 1 < len(args) and not args[i + 1].startswith('--'):
                     # Next argument is the value (e.g., --iface en0)
                     options[key] = args[i + 1]

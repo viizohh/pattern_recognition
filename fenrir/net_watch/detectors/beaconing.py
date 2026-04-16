@@ -51,7 +51,6 @@ class BeaconingDetector:
 
         self.last_check = current_time
 
-        # Get domains with periodic query patterns from domain tracker
         periodic_domains = self.domain_tracker.get_periodic_domains()
 
         for domain, interval, query_count in periodic_domains:
@@ -59,7 +58,6 @@ class BeaconingDetector:
             if domain in self.detected_beacons:
                 continue
 
-            # Get devices that contacted this domain
             profile = self.domain_tracker.get_or_create_domain(domain)
             devices = list(profile.devices)
 
@@ -92,7 +90,6 @@ class BeaconingDetector:
         """Generate an alert for detected beaconing"""
         device_str = devices[0] if len(devices) == 1 else f"{len(devices)} devices"
 
-        # Format the interval nicely
         if interval < 60:
             interval_str = f"{int(interval)} seconds"
         elif interval < 3600:
@@ -102,7 +99,6 @@ class BeaconingDetector:
 
         duration_str = format_duration(duration)
 
-        # Check if it's a known tracker (lower severity)
         if self.domain_tracker.is_known_tracker(domain):
             self.alert_manager.info(
                 f"{device_str} contacted {domain} every {interval_str} for {duration_str}.",
@@ -145,7 +141,6 @@ class BeaconingDetector:
             if not intervals:
                 continue
 
-            # Check regularity
             avg_interval = sum(intervals) / len(intervals)
             variance = sum((x - avg_interval) ** 2 for x in intervals) / len(intervals)
             std_dev = variance ** 0.5

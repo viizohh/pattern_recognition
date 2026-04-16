@@ -5,7 +5,6 @@ from typing import Optional
 from colorama import Fore, Style, init
 from net_watch.utils import format_timestamp
 
-# Initialize colorama
 init(autoreset=True)
 
 

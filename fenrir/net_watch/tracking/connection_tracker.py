@@ -94,7 +94,6 @@ class ConnectionTracker:
             self.stats.add_connection(src_ip, dst_ip, dst_port, timestamp)
             self.device_connections[src_ip].add_connection(src_ip, dst_ip, dst_port, timestamp)
 
-            # Update port stats
             self.port_stats[dst_port]['connections'] += 1
             self.port_stats[dst_port]['unique_sources'].add(src_ip)
             self.port_stats[dst_port]['unique_destinations'].add(dst_ip)

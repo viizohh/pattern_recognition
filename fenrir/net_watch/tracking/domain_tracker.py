@@ -163,7 +163,6 @@ class DomainTracker:
             if freq == 0:
                 continue
 
-            # Check if queries are relatively regular
             timestamps = sorted(profile.query_timestamps)
             intervals = [timestamps[i+1] - timestamps[i] for i in range(len(timestamps)-1)]
 

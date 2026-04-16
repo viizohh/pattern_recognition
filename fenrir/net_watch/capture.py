@@ -63,7 +63,6 @@ class PacketCapture:
             if not packet.haslayer(IP):
                 return  # Skip non-IP packets (like ARP)
             ip_layer = packet[IP]
-            # Check if packet is from or to the filtered device
             if ip_layer.src != self.filter_device and ip_layer.dst != self.filter_device:
                 return
 
@@ -151,7 +150,6 @@ class PacketCapture:
 
     def _show_summary(self):
         """Show capture summary"""
-        # Call custom summary callback first (e.g., website list)
         if self.summary_callback:
             self.summary_callback()
 
@@ -163,7 +161,6 @@ class PacketCapture:
             print(f"  Duration: {duration:.1f} seconds")
             print(f"  Rate: {self.packet_count/duration:.1f} packets/sec")
 
-            # Show alert summary
             alert_summary = self.alert_manager.get_summary()
             print(f"\nAlerts:")
             for level, count in alert_summary.items():

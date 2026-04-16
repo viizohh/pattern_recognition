@@ -29,11 +29,9 @@ class HTTPParser:
                 try:
                     payload_str = payload.decode('utf-8', errors='ignore')
 
-                    # Check for HTTP request
                     if payload_str.startswith(('GET ', 'POST ', 'PUT ', 'DELETE ', 'HEAD ')):
                         return self._handle_http_request(payload_str, packet, timestamp)
 
-                    # Check for HTTP response
                     elif payload_str.startswith('HTTP/'):
                         return self._handle_http_response(payload_str, packet, timestamp)
 
@@ -52,7 +50,6 @@ class HTTPParser:
         if not lines:
             return None
 
-        # Parse request line
         request_line = lines[0]
         parts = request_line.split(' ')
         if len(parts) < 3:
@@ -61,7 +58,6 @@ class HTTPParser:
         method = parts[0]
         path = parts[1]
 
-        # Extract Host header
         host = None
         user_agent = None
         for line in lines[1:]:
@@ -97,7 +93,6 @@ class HTTPParser:
         if not lines:
             return None
 
-        # Parse status line
         status_line = lines[0]
         parts = status_line.split(' ', 2)
         if len(parts) < 3:

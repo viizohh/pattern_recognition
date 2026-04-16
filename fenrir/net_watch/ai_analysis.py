@@ -16,10 +16,14 @@ from pathlib import Path
 class ScanResultsExporter:
     """Exports scan results to structured format for AI analysis."""
 
-    def __init__(self, output_dir: str = "./scan_results"):
+    def __init__(self, output_dir: str = "./analysis"):
         """Initialize exporter with output directory."""
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        (self.output_dir / "raw_data").mkdir(exist_ok=True)
+        (self.output_dir / "reports").mkdir(exist_ok=True)
+        (self.output_dir / "summaries").mkdir(exist_ok=True)
 
     def export_to_json(self, monitor, filename: Optional[str] = None) -> str:
         """
@@ -34,9 +38,9 @@ class ScanResultsExporter:
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"scan_results_{timestamp}.json"
+            filename = f"scan_{timestamp}.json"
 
-        filepath = self.output_dir / filename
+        filepath = self.output_dir / "raw_data" / filename
 
         # Collect all scan data
         scan_data = {
@@ -128,7 +132,6 @@ class ScanResultsExporter:
         """Export session information to structured format."""
         sessions_data = {}
 
-        # Export active sessions
         for device_ip, sessions in session_tracker.active_sessions.items():
             active_session_data = []
             for session in sessions:
@@ -180,14 +183,10 @@ class AIPatternAnalyzer:
         Returns:
             Dictionary containing AI analysis results
         """
-        # Load scan data
         with open(json_file_path, 'r') as f:
             scan_data = json.load(f)
 
-        # Prepare analysis prompt
         prompt = self._build_analysis_prompt(scan_data)
-
-        # Call Claude API
         analysis = self._call_claude_api(prompt)
 
         return {
@@ -346,7 +345,6 @@ Be precise about threat indicators and avoid false positives where possible.
             f"Ports accessed: {len(connections.get('ports_accessed', {}))}"
         ]
 
-        # Show top ports
         ports = connections.get('ports_accessed', {})
         if ports:
             top_ports = sorted(ports.items(), key=lambda x: x[1], reverse=True)[:10]
@@ -411,13 +409,9 @@ class AIAnalysisEngine:
         Returns:
             Dictionary containing full analysis results
         """
-        # Export scan results to JSON
         json_file = self.exporter.export_to_json(monitor)
-
-        # Run AI analysis
         analysis = self.analyzer.analyze_scan_results(json_file)
 
-        # Save report if requested
         if save_report:
             report_file = self._save_analysis_report(analysis)
             analysis['report_file'] = report_file
@@ -427,13 +421,32 @@ class AIAnalysisEngine:
     def _save_analysis_report(self, analysis: Dict) -> str:
         """Save AI analysis report to markdown file."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_file = self.output_dir / f"ai_analysis_{timestamp}.md"
+        report_file = self.output_dir / "reports" / f"analysis_{timestamp}.md"
+        summary_file = self.output_dir / "summaries" / f"summary_{timestamp}.txt"
 
         with open(report_file, 'w') as f:
-            f.write("# Network Security AI Analysis Report\n\n")
-            f.write(f"**Generated:** {analysis['analysis_timestamp']}\n\n")
-            f.write(f"**Scan File:** {analysis['scan_file']}\n\n")
-            f.write("---\n\n")
+            f.write("# FENRIR Network Security Analysis Report\n")
+            f.write("=" * 70 + "\n\n")
+            f.write(f"**Generated:** {analysis['analysis_timestamp']}\n")
+            f.write(f"**Scan Data:** {analysis['scan_file']}\n\n")
+            f.write("=" * 70 + "\n\n")
             f.write(analysis['ai_analysis'])
+            f.write("\n\n" + "=" * 70 + "\n")
+            f.write("End of Report\n")
+
+        with open(summary_file, 'w') as f:
+            f.write("FENRIR ANALYSIS SUMMARY\n")
+            f.write("=" * 50 + "\n")
+            f.write(f"Timestamp: {analysis['analysis_timestamp']}\n")
+            f.write(f"Scan File: {analysis['scan_file']}\n")
+            f.write(f"Full Report: {report_file}\n")
+            f.write("=" * 50 + "\n\n")
+
+            lines = analysis['ai_analysis'].split('\n')
+            summary_lines = []
+            for line in lines[:30]:  # First 30 lines
+                summary_lines.append(line)
+            f.write('\n'.join(summary_lines))
+            f.write("\n\n[See full report for complete analysis]")
 
         return str(report_file)

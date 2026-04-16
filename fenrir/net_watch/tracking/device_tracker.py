@@ -91,7 +91,6 @@ class DeviceTracker:
         if is_private_ip(src_ip):
             src_device.add_outbound_connection(dst_ip, dst_port, size)
 
-        # Track inbound to local devices
         if is_private_ip(dst_ip):
             dst_device.add_inbound_connection(src_ip, size)
 

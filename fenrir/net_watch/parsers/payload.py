@@ -63,7 +63,6 @@ class PayloadParser:
         self.findings: List[SensitiveDataFinding] = []
         self.findings_by_type: Dict[str, List[SensitiveDataFinding]] = defaultdict(list)
 
-        # Track unique values to avoid duplicates
         self.seen_values: Set[str] = set()
 
     def parse_packet(self, packet) -> Optional[List[SensitiveDataFinding]]:
@@ -78,7 +77,6 @@ class PayloadParser:
             if not packet.haslayer(Raw):
                 return None
 
-            # Get packet metadata
             src_ip = packet[IP].src if packet.haslayer(IP) else "unknown"
             dst_ip = packet[IP].dst if packet.haslayer(IP) else "unknown"
 
@@ -89,7 +87,6 @@ class PayloadParser:
             else:
                 protocol = "unknown"
 
-            # Extract payload
             payload = packet[Raw].load
 
             # Try to decode as text

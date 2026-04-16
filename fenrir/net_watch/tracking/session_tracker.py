@@ -80,7 +80,6 @@ class SessionTracker:
         self.active_sessions[device_ip].append(session)
         self.known_primary_domains.add(primary_domain)
 
-        # Track in recent visits
         self.recent_visits[device_ip].append((primary_domain, time.time()))
 
         # Keep only last 20 visits
@@ -89,14 +88,12 @@ class SessionTracker:
 
     def track_domain_access(self, device_ip: str, domain: str, is_http_request: bool = False):
         """Track when a device accesses a domain"""
-        # Check if this is part of an existing session
         sessions = self.active_sessions.get(device_ip, [])
 
         if not sessions:
             # New session - this domain is primary
             self.start_session(device_ip, domain)
         else:
-            # Check if it's a new primary domain or third-party
             if self._is_likely_primary_domain(domain):
                 # New primary site being visited
                 self.start_session(device_ip, domain)
@@ -121,7 +118,6 @@ class SessionTracker:
                 elif domain == session.primary_domain:
                     return f"on {session.primary_domain}"
 
-        # Check recent visits
         recent = self.recent_visits.get(device_ip, [])
         if recent:
             last_site, last_time = recent[-1]

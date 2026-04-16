@@ -36,7 +36,6 @@ class DNSParser:
 
     def _handle_query(self, query_name: str, timestamp: float, packet) -> dict:
         """Handle a DNS query"""
-        # Track query
         if query_name not in self.queries:
             self.queries[query_name] = []
         self.queries[query_name].append(timestamp)
@@ -59,12 +58,10 @@ class DNSParser:
         if not dns.an:
             return None
 
-        # Extract query name from question section
         query_name = None
         if dns.qd:
             query_name = dns.qd.qname.decode('utf-8', errors='ignore').rstrip('.')
 
-        # Extract IPs from answer section
         ips = []
         for i in range(dns.ancount):
             answer = dns.an[i]
@@ -72,13 +69,11 @@ class DNSParser:
                 ip = answer.rdata
                 ips.append(ip)
 
-                # Track domain -> IP mapping
                 if query_name:
                     if query_name not in self.responses:
                         self.responses[query_name] = set()
                     self.responses[query_name].add(ip)
 
-                    # Track reverse mapping
                     self.reverse_lookups[ip] = query_name
 
         if ips and query_name:

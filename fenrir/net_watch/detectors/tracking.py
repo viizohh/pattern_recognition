@@ -43,7 +43,6 @@ class TrackingDetector:
         else:
             session['third_party_domains'].add(domain)
 
-            # Check if it's a known tracker
             if self.domain_tracker.is_known_tracker(domain):
                 session['tracker_domains'].add(domain)
 
@@ -182,7 +181,6 @@ class TrackingDetector:
             if not self.domain_tracker.is_known_tracker(domain):
                 continue
 
-            # Check for burst of queries
             if len(profile.query_timestamps) < 5:
                 continue
 

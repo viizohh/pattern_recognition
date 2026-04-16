@@ -101,7 +101,6 @@ class NetworkMonitor:
             from scapy.all import IP, TCP, UDP, ARP
             summary = packet.summary()[:80]
 
-            # Extract and display packet details
             if packet.haslayer(IP):
                 src = packet[IP].src
                 dst = packet[IP].dst
@@ -120,15 +119,12 @@ class NetworkMonitor:
             elif packet.haslayer(ARP):
                 print(f"[ARP] {summary}")
 
-        # Run all protocol parsers to extract relevant information
         dns_data = self.dns_parser.parse_packet(packet)
         http_data = self.http_parser.parse_packet(packet)
         tcp_data = self.tcp_parser.parse_packet(packet)
 
-        # Parse payload for sensitive data
         payload_findings = self.payload_parser.parse_packet(packet)
 
-        # Update trackers with parsed data
         if dns_data:
             self._handle_dns_data(dns_data)
 
@@ -142,7 +138,6 @@ class NetworkMonitor:
         if payload_findings:
             self._handle_sensitive_data(payload_findings)
 
-        # Run detectors periodically (not on every packet to save CPU)
         current_time = time.time()
         if current_time - self.last_detector_run > 10:  # Every 10 seconds
             self.run_detectors()
@@ -157,25 +152,20 @@ class NetworkMonitor:
         - Website browsing context
         """
         if data['type'] == 'dns_query':
-            # Extract DNS query information
             domain = data['domain']
             device_ip = data['source_ip']
             timestamp = data['timestamp']
 
-            # Update trackers with DNS query information
             self.domain_tracker.track_dns_query(domain, device_ip, timestamp)
             self.device_tracker.track_dns_query(device_ip, domain)
 
-            # Track browsing session context (e.g., "while visiting linkedin.com")
             self.session_tracker.track_domain_access(device_ip, domain, is_http_request=False)
 
-            # Display DNS queries in show-all mode
             if self.show_all:
                 from net_watch.filters import is_local_mdns_domain
                 domain_type = "mDNS" if is_local_mdns_domain(domain) else "DNS"
                 print(f"[{domain_type}] {device_ip} → {domain}")
 
-            # Show context in verbose mode
             elif self.alert_manager.verbose:
                 context = self.session_tracker.get_context_for_domain(device_ip, domain)
                 if context:
@@ -205,18 +195,14 @@ class NetworkMonitor:
             path = data.get('path', '/')
 
             if host:
-                # Update trackers with HTTP request info
                 self.domain_tracker.track_http_request(host, device_ip)
                 self.device_tracker.track_http_request(device_ip, host)
 
-                # Track browsing session context
                 self.session_tracker.track_domain_access(device_ip, host, is_http_request=True)
 
-                # Display in show-all mode
                 if self.show_all:
                     print(f"[HTTP] {device_ip} → {method} {host}{path}")
 
-                # Show context in verbose mode
                 elif self.alert_manager.verbose:
                     context = self.session_tracker.get_context_for_domain(device_ip, host)
                     print(f"  HTTP: {host} ({context if context else 'new visit'})")
@@ -227,7 +213,6 @@ class NetworkMonitor:
             dst_ip = data['dest_ip']
             dst_port = data['dest_port']
 
-            # Track HTTPS connections
             self.device_tracker.track_https_connection(src_ip, dst_ip)
 
             # Try to match IP to domain using DNS records
@@ -235,7 +220,6 @@ class NetworkMonitor:
             if domain != dst_ip:  # Successfully resolved IP to domain
                 self.domain_tracker.track_http_request(domain, src_ip)
 
-                # Display with domain name
                 if self.show_all:
                     print(f"[HTTPS] {src_ip} → {domain}:{dst_port}")
             elif self.show_all:
@@ -254,14 +238,12 @@ class NetworkMonitor:
         dst_port = data['dest_port']
         size = data['size']
 
-        # Update trackers with TCP connection information
         self.device_tracker.track_connection(src_ip, dst_ip, dst_port, size)
         self.connection_tracker.track_connection(src_ip, dst_ip, dst_port, success=True)
 
     def _handle_sensitive_data(self, findings: list):
         """Handle sensitive data found in packet payloads."""
         for finding in findings:
-            # Create critical alert for sensitive data exposure
             data_type_names = {
                 'password': 'Password',
                 'email': 'Email Address',
@@ -311,7 +293,6 @@ class NetworkMonitor:
         print("Websites Visited:")
         print("=" * 60)
 
-        # Get all devices that have sessions
         all_devices = set()
         for device_ip in self.session_tracker.active_sessions.keys():
             all_devices.add(device_ip)
@@ -326,7 +307,6 @@ class NetworkMonitor:
             recent_sites = self.session_tracker.get_recent_websites(device_ip, limit=10)
 
             if recent_sites:
-                # Get device info
                 if self.device_tracker.devices.get(device_ip):
                     device = self.device_tracker.devices[device_ip]
                     print(f"\nDevice: {device_ip}")
@@ -334,7 +314,6 @@ class NetworkMonitor:
                     for i, site in enumerate(recent_sites, 1):
                         print(f"    {i}. {site}")
 
-                    # Show session details
                     summary = self.session_tracker.get_session_summary(device_ip)
                     if summary.get('current_site'):
                         print(f"  Currently on: {summary['current_site']}")
@@ -343,7 +322,6 @@ class NetworkMonitor:
 
         print("=" * 60)
 
-        # Show sensitive data findings if any
         sensitive_summary = self.payload_parser.get_summary()
         if sensitive_summary:
             print("\n" + "=" * 60)
@@ -365,17 +343,24 @@ class NetworkMonitor:
         self.alert_manager.info("Running AI analysis on scan results...")
 
         try:
-            # Run full AI analysis
             results = self.ai_engine.run_full_analysis(self, save_report=True)
 
-            print("\n" + "=" * 60)
-            print("AI SECURITY ANALYSIS")
-            print("=" * 60)
+            print("\n" + "=" * 70)
+            print("FENRIR AI SECURITY ANALYSIS")
+            print("=" * 70)
             print(results['ai_analysis'])
-            print("\n" + "=" * 60)
-            print(f"Full report saved to: {results.get('report_file', 'N/A')}")
-            print(f"Raw data saved to: {results['scan_file']}")
-            print("=" * 60)
+            print("\n" + "=" * 70)
+            print("ANALYSIS RESULTS SAVED:")
+            print("=" * 70)
+            print(f"Full Report:  {results.get('report_file', 'N/A')}")
+            print(f"Raw Data:     {results['scan_file']}")
+            print(f"All files in: ./analysis/")
+            print("\nFolder Structure:")
+            print("  ./analysis/")
+            print("    ├── raw_data/      (JSON scan data)")
+            print("    ├── reports/       (Full markdown reports)")
+            print("    └── summaries/     (Quick text summaries)")
+            print("=" * 70)
 
         except Exception as e:
             self.alert_manager.error(f"AI analysis failed: {e}")
@@ -389,16 +374,13 @@ def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_o
     click.echo("=" * 60)
     click.echo()
 
-    # Create monitor
     monitor = NetworkMonitor(verbose=verbose, alerts_only=alerts_only, show_all=show_all, enable_ai=enable_ai)
 
-    # Create custom summary callback that includes AI analysis
     def summary_callback_with_ai():
         monitor.show_session_summary()
         if enable_ai:
             monitor.run_ai_analysis()
 
-    # Create capture engine
     capture = PacketCapture(
         alert_manager=monitor.alert_manager,
         interface=iface,
@@ -412,7 +394,6 @@ def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_o
     # Register packet handler
     capture.register_handler(monitor.handle_packet)
 
-    # Start capture
     capture.start_live_capture()
 
 
@@ -422,16 +403,13 @@ def run_pcap_analysis(pcap_file, device=None, show_all=False, verbose=False, ale
     click.echo("=" * 60)
     click.echo()
 
-    # Create monitor
     monitor = NetworkMonitor(verbose=verbose, alerts_only=alerts_only, show_all=show_all, enable_ai=enable_ai)
 
-    # Create custom summary callback that includes AI analysis
     def summary_callback_with_ai():
         monitor.show_session_summary()
         if enable_ai:
             monitor.run_ai_analysis()
 
-    # Create capture engine
     capture = PacketCapture(
         alert_manager=monitor.alert_manager,
         pcap_file=pcap_file,
@@ -448,7 +426,6 @@ def run_pcap_analysis(pcap_file, device=None, show_all=False, verbose=False, ale
     # Analyze pcap
     capture.analyze_pcap()
 
-    # Run detectors one final time
     monitor.run_detectors()
 
 
@@ -459,7 +436,6 @@ def cli():
 
     Type 'vcu' to enter interactive mode.
     """
-    # Start the interactive shell
     from net_watch.shell import start_shell
     start_shell()
 

@@ -25,7 +25,6 @@ class TCPConnection:
         """Update connection state"""
         current_time = time.time()
 
-        # Track idle time
         idle_time = current_time - self.last_seen
         if idle_time > 60:  # More than 1 minute idle
             self.idle_periods.append(idle_time)
@@ -34,7 +33,6 @@ class TCPConnection:
         self.packets += 1
         self.bytes_sent += packet_size
 
-        # Check flags
         if flags & 0x02:  # SYN flag
             pass
         if flags & 0x10:  # ACK flag
@@ -81,7 +79,6 @@ class TCPParser:
         flags = tcp.flags
         packet_size = len(packet)
 
-        # Create connection key (bidirectional)
         conn_key_fwd = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
         conn_key_rev = f"{dst_ip}:{dst_port}-{src_ip}:{src_port}"
 
@@ -92,17 +89,14 @@ class TCPParser:
         elif conn_key_rev in self.connections:
             conn = self.connections[conn_key_rev]
 
-        # Check for SYN without ACK (new connection attempt)
         if flags & 0x02 and not (flags & 0x10):  # SYN but not ACK
             if conn is None:
                 conn = TCPConnection(src_ip, src_port, dst_ip, dst_port)
                 self.connections[conn_key_fwd] = conn
 
-        # Update existing connection
         if conn:
             conn.update(packet_size, flags)
 
-        # Check for RST (failed connection)
         if flags & 0x04:  # RST flag
             key = (dst_ip, dst_port)
             self.failed_connections[key] = self.failed_connections.get(key, 0) + 1

@@ -49,7 +49,6 @@ class AnomalyDetector:
 
         self.last_check = current_time
 
-        # Run various checks
         self.check_long_lived_connections()
         self.check_idle_connections()
         self.check_failed_connections()
@@ -70,7 +69,6 @@ class AnomalyDetector:
 
             duration_str = format_duration(conn.get_duration())
 
-            # Check if there's been recent activity
             idle_time = time.time() - conn.last_seen
             if idle_time > 60:  # No activity in last minute
                 self.alert_manager.warning(
@@ -213,11 +211,9 @@ class AnomalyDetector:
         tunneling_suspects = []
 
         for domain, query_list in self.dns_parser.queries.items():
-            # Check query volume
             if len(query_list) < 20:
                 continue
 
-            # Check domain length (tunneling uses long subdomains)
             if len(domain) > 50:
                 # Calculate average query rate
                 if len(query_list) >= 2:
@@ -242,14 +238,12 @@ class AnomalyDetector:
         from collections import defaultdict
         scans = []
 
-        # Track connections per source-destination pair
         src_to_dst_ports = defaultdict(set)
 
         for conn in self.tcp_parser.get_active_connections():
             key = (conn.src_ip, conn.dst_ip)
             src_to_dst_ports[key].add(conn.dst_port)
 
-        # Check for many ports accessed on same destination
         for (src_ip, dst_ip), ports in src_to_dst_ports.items():
             if len(ports) > 10:  # More than 10 different ports
                 scans.append({
