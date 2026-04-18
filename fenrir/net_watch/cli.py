@@ -8,6 +8,7 @@ This module coordinates all the network monitoring components:
 
 import click
 import time
+from colorama import Fore, Style
 from net_watch.capture import PacketCapture
 from net_watch.alerts import AlertManager, AlertLevel, Alert
 from net_watch.parsers.dns import DNSParser
@@ -363,12 +364,12 @@ class NetworkMonitor:
             print("=" * 70)
 
         except Exception as e:
-            self.alert_manager.error(f"AI analysis failed: {e}")
+            print(f"\n{Fore.RED}AI analysis failed: {e}{Style.RESET_ALL}")
             import traceback
             traceback.print_exc()
 
 
-def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_only=False, enable_ai=False):
+def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_only=False, enable_ai=False, count=None):
     """Wrapper function to run live capture (called from shell)"""
     click.echo(f"Fenrir v1.0 - Live Network Monitor")
     click.echo("=" * 60)
@@ -385,7 +386,8 @@ def run_live_capture(iface, device=None, show_all=False, verbose=False, alerts_o
         alert_manager=monitor.alert_manager,
         interface=iface,
         filter_device=device,
-        summary_callback=summary_callback_with_ai
+        summary_callback=summary_callback_with_ai,
+        packet_limit=count
     )
 
     # Store capture reference for AI analysis

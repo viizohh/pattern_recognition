@@ -27,18 +27,20 @@ class PacketCapture:
     def __init__(
         self,
         alert_manager: AlertManager,
-        interface: Optional[str] = None,        # Network interface for live capture (e.g., "en0")
-        pcap_file: Optional[str] = None,        # Path to .pcap file for analysis
-        filter_device: Optional[str] = None,    # Optional: Only show traffic from this IP
-        summary_callback: Optional[Callable] = None  # Optional: Function to show summary at end
+        interface: Optional[str] = None,
+        pcap_file: Optional[str] = None,
+        filter_device: Optional[str] = None,
+        summary_callback: Optional[Callable] = None,
+        packet_limit: Optional[int] = None
     ):
         self.alert_manager = alert_manager
         self.interface = interface
         self.pcap_file = pcap_file
-        self.filter_device = filter_device      # If set, only process packets from this device
+        self.filter_device = filter_device
         self.packet_count = 0
+        self.packet_limit = packet_limit
         self.start_time = None
-        self.handlers = []                      # List of functions to call for each packet
+        self.handlers = []
         self.summary_callback = summary_callback
 
     def register_handler(self, handler: Callable):
@@ -88,17 +90,23 @@ class PacketCapture:
         print(f"Starting live capture on {self.interface}...")
         if self.filter_device:
             print(f"Filtering for device: {self.filter_device}")
-        print("Press Ctrl+C to stop\n")
+        if self.packet_limit:
+            print(f"Will capture {self.packet_limit} packets\n")
+        else:
+            print("Press Ctrl+C to stop\n")
 
         try:
             # Use Scapy's sniff() function to capture packets
             # Note: Don't use BPF filters on macOS - filter in Python instead
             # (BPF compilation fails on some macOS configurations with libpcap)
             sniff(
-                iface=self.interface,           # Network interface (e.g., "en0")
-                prn=self._process_packet,       # Callback for each packet
-                store=False                     # Don't store packets in memory (saves RAM)
+                iface=self.interface,
+                prn=self._process_packet,
+                store=False,
+                count=self.packet_limit if self.packet_limit else 0
             )
+            if self.packet_limit:
+                self._show_summary()
         except KeyboardInterrupt:
             # User pressed Ctrl+C - show summary and exit gracefully
             self._show_summary()

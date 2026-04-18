@@ -42,12 +42,19 @@ class ScanResultsExporter:
 
         filepath = self.output_dir / "raw_data" / filename
 
-        # Collect all scan data
+        scan_duration = 0
+        total_packets = 0
+        if hasattr(monitor, 'capture') and monitor.capture:
+            if monitor.capture.start_time:
+                from time import time
+                scan_duration = time() - monitor.capture.start_time
+            total_packets = monitor.capture.packet_count
+
         scan_data = {
             "metadata": {
                 "timestamp": datetime.now().isoformat(),
-                "scan_duration": monitor.capture.total_time if hasattr(monitor, 'capture') else 0,
-                "total_packets": monitor.capture.packet_count if hasattr(monitor, 'capture') else 0
+                "scan_duration": scan_duration,
+                "total_packets": total_packets
             },
             "alerts": self._export_alerts(monitor.alert_manager),
             "devices": self._export_devices(monitor.device_tracker),

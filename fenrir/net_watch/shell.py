@@ -74,6 +74,7 @@ class FenrirShell(cmd.Cmd):
         Options:
           --iface TEXT      Network interface (required for live)
           --device TEXT     Filter for specific device IP
+          --count NUMBER    Capture N packets then stop (e.g., --count 200)
           --show-all        Show ALL traffic (like Wireshark)
           --alerts-only     Only show warnings and alerts
           --verbose         Show detailed information
@@ -116,7 +117,8 @@ class FenrirShell(cmd.Cmd):
                     show_all=options.get('show-all', False),
                     verbose=options.get('verbose', False),
                     alerts_only=options.get('alerts-only', False),
-                    enable_ai=options.get('ai', False)
+                    enable_ai=options.get('ai', False),
+                    count=int(options['count']) if 'count' in options else None
                 )
 
             elif subcommand == 'pcap':
@@ -143,9 +145,6 @@ class FenrirShell(cmd.Cmd):
                 print(f"{Fore.RED}Error: Unknown subcommand '{subcommand}'{Style.RESET_ALL}")
                 print("Available subcommands: live, pcap")
 
-        except KeyboardInterrupt:
-            # Handle Ctrl+C gracefully
-            print("\n\nCapture stopped.")
         except Exception as e:
             # Catch and display any other errors
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
